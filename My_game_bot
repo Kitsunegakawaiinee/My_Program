@@ -1,0 +1,169 @@
+import tkinter as tk
+from tkinter import messagebox
+from tkinter import ttk
+import os
+import threading as TH
+import time as T
+import pynput as pp
+
+class Program:
+
+    class __Method:
+        
+        def __init__(self, window, window_w) -> None:
+            self.__mouse = pp.mouse.Controller()
+            self.__start_button = tk.Button(window, text="Start", command= lambda: self.__start_command())
+            self.__stop_button = tk.Button(window, text="Stop", command= lambda: self.__stop_command())
+            self.__y_ss_button = 20
+
+            self.__label = tk.Label(window, text="Choose mode")
+            self.__y_label = 50
+
+            self.__all_mode = ["Recieve", "Click","Image Recieve","Image Recieve bottom","Self add"]
+            self.__mode = {
+                "Recieve" : [[100,400],[400,100]], 
+                "Click": [[],[]],
+                "Image Recieve" : [[],[]],
+                "Image Recieve bottom" : [[],[]],
+                "Self add" : [[],[]]}
+            self.__y_choice_position = 75
+
+            self.__choice_box = ttk.Combobox(window, values=self.__all_mode, state="readonly")
+            self.__choice_box.current(0)
+
+            self.__label_time_count = tk.Label(text="", font=[40])
+
+            self.__window_w = window_w
+
+            self.__working = False
+            self.__delay = 3
+
+            self.__show_start()
+
+            listener = pp.keyboard.Listener(on_press=self.__keyboard)
+            listener.start()
+
+
+        # time count
+        def __time_to_text(self, input):
+            min,sec = divmod(input, 60)
+            hour,min = divmod(min,60)
+
+            if(hour > 0): 
+                return "%02d:%02d:%02d"%(hour,min,sec)
+
+            return "%02d:%02d"%(min,sec)
+
+        #when start button pressed
+        def __show_start(self):
+            self.__stop_button.place_forget()
+
+            self.__show_witget(self.__start_button, self.__y_ss_button)
+            self.__show_witget(self.__label, self.__y_label)
+            self.__show_witget(self.__choice_box, self.__y_choice_position)
+
+        def __start_command(self):
+            self.__working = True
+
+            thread = TH.Thread(target=self.__working_function)
+            thread.start()
+
+            self.__show_stop()
+
+        #when stop button pressed
+        def __show_stop(self):
+            self.__start_button.place_forget()
+            self.__choice_box.place_forget()
+            self.__label.place_forget()
+            self.__label_time_count.place_forget()
+
+            self.__show_witget(self.__stop_button, self.__y_ss_button)
+
+        def __stop_command(self):
+            self.__working = False
+            self.__show_start()
+
+        #show witget
+        def __show_witget(self, input, y_position):
+            input.place(y=y_position)
+            input.update()
+
+            position_x = input.winfo_width()
+            position_x = self.__window_w/2 - position_x/2
+
+            input.place_configure(x=position_x)
+
+        # working
+        def __working_function(self):
+            input_mode = self.__choice_box.get()
+            input_list = self.__mode[input_mode]
+
+            x = input_list[0]
+            y = input_list[1]
+            count = len(x)
+
+            while(self.__working):
+
+                for i in range(count):
+                    if(not self.__working): break
+
+                    self.__mouse.position = (x[i],y[i])
+                    T.sleep(0.2)
+                    self.__mouse.click(pp.mouse.Button.left, 1)
+                    T.sleep(1)
+
+                if(not self.__working): break
+
+                self.__count_down(self.__delay)
+
+            self.__label_time_count.place_forget()
+            return False
+        
+        def __count_down(self,wait):
+
+            while(wait and self.__working):
+                wait -= 1
+                self.__label_time_count.configure(text=self.__time_to_text(wait))
+                self.__show_witget(self.__label_time_count, self.__y_label)
+                T.sleep(1)
+
+            self.__label_time_count.place_forget()
+        
+        #keyboard listener
+        def __keyboard(self, event):
+            if(event == pp.keyboard.Key.esc) and self.__working:
+                self.__stop_command()
+        
+    def __init__(self) -> None:
+
+        self.__root = tk.Tk()
+        self.__root.protocol("WM_DELETE_WINDOW",  self.__on_close)
+        self.__x = 500
+        self.__y = 200
+        self.__root.resizable(False, False)
+
+        try:
+            self.__method = self.__Method(self.__root, self.__x)
+        except Exception as e:
+            get = messagebox.showerror("Error Occure", e.__str__()) 
+            if(get == "ok"): 
+                os._exit(os.X_OK)
+
+        self.__root.geometry(f'{self.__x}x{self.__y}')
+        self.__root.mainloop()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        pass
+
+    def __on_close(self):
+        os._exit(os.X_OK)
+        
+def main():
+    with Program() as manager:
+        pass
+
+if __name__ == '__main__':
+    main()
