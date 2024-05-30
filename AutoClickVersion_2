@@ -104,12 +104,10 @@ class Program:
 
         #keyboard listener
         def keyboard_working(self, key):
-            # if (key == pp.keyboard.Key.esc or ) and self.program.working)):
-            #     os._exit(os.X_OK)#exit
 
             if(key == pp.keyboard.Key.esc and self.program.working): 
                 self.toggle_button(self.__stop_button)
-            elif(key == pp.keyboard.KeyCode(char='1') or key == pp.keyboard.KeyCode(char='1')):
+            elif(key == pp.keyboard.KeyCode(char='1') or key == pp.keyboard.KeyCode(char='1')) and self.program.working:
                 self.clicking_start()
             elif((key == pp.keyboard.KeyCode(char='2') or key == pp.keyboard.KeyCode(char='/')) and self.program.working):
                 self.program.km = not self.program.km
